@@ -6,7 +6,7 @@ import dev.hytalemodding.colonies.model.Bucket;
 import dev.hytalemodding.colonies.model.BucketKey;
 import dev.hytalemodding.colonies.model.Colony;
 import dev.hytalemodding.colonies.model.Group;
-import dev.hytalemodding.colonies.model.Location;
+import dev.hytalemodding.colonies.model.Location2D;
 import dev.hytalemodding.colonies.model.Zone;
 import dev.hytalemodding.colonies.model.enums.XpType;
 
@@ -141,11 +141,10 @@ public class JsonColonyRepository implements ColonyRepository {
         return doc;
     }
 
-    private LocationDocument toDocument(Location location) {
-        LocationDocument doc = new LocationDocument();
+    private Location2DDocument toDocument(Location2D location) {
+        Location2DDocument doc = new Location2DDocument();
         doc.worldId = location.getWorldId();
         doc.x = location.getX();
-        doc.y = location.getY();
         doc.z = location.getZ();
         return doc;
     }
@@ -188,8 +187,8 @@ public class JsonColonyRepository implements ColonyRepository {
         );
     }
 
-    private Location fromDocument(LocationDocument document) {
-        return new Location(document.worldId, document.x, document.y, document.z);
+    private Location2D fromDocument(Location2DDocument document) {
+        return new Location2D(document.worldId, document.x, document.z);
     }
 
     public static final class ColonyDocument {
@@ -203,16 +202,15 @@ public class JsonColonyRepository implements ColonyRepository {
     }
 
     public static final class ZoneDocument {
-        public LocationDocument pos1;
-        public LocationDocument pos2;
-        public LocationDocument center;
+        public Location2DDocument pos1;
+        public Location2DDocument pos2;
+        public Location2DDocument center;
     }
 
-    public static final class LocationDocument {
+    public static final class Location2DDocument {
         public String worldId;
-        public double x;
-        public double y;
-        public double z;
+        public int x;
+        public int z;
     }
 
     public static final class GroupDocument {

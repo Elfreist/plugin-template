@@ -13,7 +13,7 @@ class ColonyModelSanityTest {
     void populationCacheStaysConsistentWithBucketSum() {
         Colony colony = new Colony(
                 UUID.randomUUID(),
-                Zone.from(new Location("world", 0, 0, 0), new Location("world", 10, 10, 10)),
+                Zone.from(new Location2D("world", 0, 0), new Location2D("world", 10, 10)),
                 "family.base",
                 System.currentTimeMillis()
         );
