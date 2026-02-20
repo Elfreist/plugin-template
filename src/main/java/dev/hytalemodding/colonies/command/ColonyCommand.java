@@ -5,10 +5,11 @@ import com.hypixel.hytale.server.core.command.system.AbstractCommand;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
 import dev.hytalemodding.colonies.config.ColonyConfig;
 import dev.hytalemodding.colonies.model.Colony;
+import dev.hytalemodding.colonies.model.Location2D;
 import dev.hytalemodding.colonies.model.Zone;
 import dev.hytalemodding.colonies.service.ColonyRegistry;
 import dev.hytalemodding.colonies.service.SelectionManager;
-import dev.hytalemodding.colonies.service.SelectionManager.Selection;
+import dev.hytalemodding.colonies.service.SelectionManager.ZoneSelection;
 import dev.hytalemodding.colonies.util.PlayerAccess;
 
 import javax.annotation.Nonnull;
@@ -19,13 +20,13 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 public class ColonyCommand extends AbstractCommand {
-    private final ColonyRegistry colonyRegistry;
+    private final ColonyRegistry registry;
     private final SelectionManager selectionManager;
     private final ColonyConfig config;
 
-    public ColonyCommand(ColonyRegistry colonyRegistry, SelectionManager selectionManager, ColonyConfig config) {
-        super("colonie", "Gestion des colonies");
-        this.colonyRegistry = colonyRegistry;
+    public ColonyCommand(ColonyRegistry registry, SelectionManager selectionManager, ColonyConfig config) {
+        super("colonie", "Create and manage colonies");
+        this.registry = registry;
         this.selectionManager = selectionManager;
         this.config = config;
     }
@@ -42,7 +43,7 @@ public class ColonyCommand extends AbstractCommand {
         }
 
         if (!PlayerAccess.isAdmin(player, config.isOpOnly(), config.getPermissionNode())) {
-            context.sendMessage(Message.raw("Tu n’as pas la permission."));
+            context.sendMessage(Message.raw("Permission refusée."));
             return CompletableFuture.completedFuture(null);
         }
 
@@ -54,39 +55,34 @@ public class ColonyCommand extends AbstractCommand {
 
         String familyId = args.get(1);
         UUID playerId = PlayerAccess.getPlayerId(player);
-        Selection selection = selectionManager.get(playerId).orElse(null);
+        ZoneSelection selection = selectionManager.getSelection(playerId).orElse(null);
         if (selection == null || !selection.isComplete()) {
-            context.sendMessage(Message.raw("Tu dois définir PosA (clic gauche) et PosB (clic droit)."));
+            context.sendMessage(Message.raw("Sélection incomplète: définis Pos A et Pos B d'abord."));
             return CompletableFuture.completedFuture(null);
         }
 
-        if (selection.getWorldId() == null) {
-            context.sendMessage(Message.raw("PosA et PosB doivent être dans le même monde."));
+        Location2D a = selection.getA();
+        Location2D b = selection.getB();
+        if (!a.getWorldId().equals(b.getWorldId())) {
+            context.sendMessage(Message.raw("Pos A et Pos B doivent être dans le même monde."));
             return CompletableFuture.completedFuture(null);
         }
 
-        Zone zone = Zone.from(
-                selection.getWorldId(),
-                selection.getAx(),
-                selection.getAz(),
-                selection.getBx(),
-                selection.getBz()
-        );
-
-        if ((zone.getMaxX() - zone.getMinX()) < config.getMinSizeXZ()
-                || (zone.getMaxZ() - zone.getMinZ()) < config.getMinSizeXZ()) {
-            context.sendMessage(Message.raw("Zone trop petite. Min=" + config.getMinSizeXZ() + "."));
+        Zone zone = Zone.from(a, b);
+        if (zone.getSizeX() < config.getMinSizeXZ() || zone.getSizeZ() < config.getMinSizeXZ()) {
+            context.sendMessage(Message.raw("Zone trop petite. Min requis: " + config.getMinSizeXZ() + "x" + config.getMinSizeXZ()));
             return CompletableFuture.completedFuture(null);
         }
 
-        Colony colony = colonyRegistry.createColony(zone, familyId);
-        selectionManager.clear(playerId);
+        Colony colony = registry.createColony(zone, familyId);
+        selectionManager.clearSelection(playerId);
+
         context.sendMessage(Message.raw(
-                "Colonie créée: id=" + colony.getId()
+                "Colonie créée: " + colony.getId()
                         + " famille=" + familyId
-                        + " centre=(" + zone.getCenterX() + "," + zone.getCenterZ() + ")"
+                        + " zone=[" + zone.getPos1() + " -> " + zone.getPos2() + "]"
+                        + " center=" + zone.getCenter()
         ));
-
         return CompletableFuture.completedFuture(null);
     }
 

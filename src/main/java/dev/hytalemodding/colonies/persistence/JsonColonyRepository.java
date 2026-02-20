@@ -6,6 +6,7 @@ import dev.hytalemodding.colonies.model.Bucket;
 import dev.hytalemodding.colonies.model.BucketKey;
 import dev.hytalemodding.colonies.model.Colony;
 import dev.hytalemodding.colonies.model.Group;
+import dev.hytalemodding.colonies.model.Location2D;
 import dev.hytalemodding.colonies.model.Zone;
 import dev.hytalemodding.colonies.model.enums.XpType;
 
@@ -20,6 +21,9 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+/**
+ * V1 JSON repository storing each colony in data/colonies/<uuid>.json.
+ */
 public class JsonColonyRepository implements ColonyRepository {
     private static final int DOCUMENT_VERSION = 1;
 
@@ -131,11 +135,17 @@ public class JsonColonyRepository implements ColonyRepository {
 
     private ZoneDocument toDocument(Zone zone) {
         ZoneDocument doc = new ZoneDocument();
-        doc.worldId = zone.getWorldId();
-        doc.ax = zone.getAx();
-        doc.az = zone.getAz();
-        doc.bx = zone.getBx();
-        doc.bz = zone.getBz();
+        doc.pos1 = toDocument(zone.getPos1());
+        doc.pos2 = toDocument(zone.getPos2());
+        doc.center = toDocument(zone.getCenter());
+        return doc;
+    }
+
+    private Location2DDocument toDocument(Location2D location) {
+        Location2DDocument doc = new Location2DDocument();
+        doc.worldId = location.getWorldId();
+        doc.x = location.getX();
+        doc.z = location.getZ();
         return doc;
     }
 
@@ -161,7 +171,7 @@ public class JsonColonyRepository implements ColonyRepository {
                 try {
                     bucket.addXp(XpType.valueOf(entry.getKey()), entry.getValue());
                 } catch (IllegalArgumentException ignored) {
-                    // Ignore unknown future XP type.
+                    // Unknown XP type from a newer version: ignored in V1 for forward compatibility.
                 }
             }
             buckets.put(key, bucket);
@@ -170,7 +180,15 @@ public class JsonColonyRepository implements ColonyRepository {
     }
 
     private Zone fromDocument(ZoneDocument document) {
-        return Zone.from(document.worldId, document.ax, document.az, document.bx, document.bz);
+        return new Zone(
+                fromDocument(document.pos1),
+                fromDocument(document.pos2),
+                fromDocument(document.center)
+        );
+    }
+
+    private Location2D fromDocument(Location2DDocument document) {
+        return new Location2D(document.worldId, document.x, document.z);
     }
 
     public static final class ColonyDocument {
@@ -184,11 +202,15 @@ public class JsonColonyRepository implements ColonyRepository {
     }
 
     public static final class ZoneDocument {
+        public Location2DDocument pos1;
+        public Location2DDocument pos2;
+        public Location2DDocument center;
+    }
+
+    public static final class Location2DDocument {
         public String worldId;
-        public int ax;
-        public int az;
-        public int bx;
-        public int bz;
+        public int x;
+        public int z;
     }
 
     public static final class GroupDocument {

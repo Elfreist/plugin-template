@@ -1,59 +1,53 @@
 package dev.hytalemodding.colonies.service;
 
+import dev.hytalemodding.colonies.model.Location2D;
+
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class SelectionManager {
-    private final ConcurrentMap<UUID, Selection> selections = new ConcurrentHashMap<>();
+    private final ConcurrentMap<UUID, ZoneSelection> selections = new ConcurrentHashMap<>();
 
-    public void setA(UUID playerId, String worldId, int x, int z) {
+    public void setPosA(UUID playerId, Location2D loc) {
         selections.compute(playerId, (id, current) -> {
-            Selection next = current == null ? new Selection() : current;
-            next.worldId = worldId;
-            next.ax = x;
-            next.az = z;
+            ZoneSelection next = current == null ? new ZoneSelection() : current;
+            next.a = loc;
             return next;
         });
     }
 
-    public void setB(UUID playerId, String worldId, int x, int z) {
+    public void setPosB(UUID playerId, Location2D loc) {
         selections.compute(playerId, (id, current) -> {
-            Selection next = current == null ? new Selection() : current;
-            if (next.worldId != null && !next.worldId.equals(worldId)) {
-                throw new IllegalArgumentException("PosA et PosB doivent être dans le même monde.");
-            }
-            next.worldId = worldId;
-            next.bx = x;
-            next.bz = z;
+            ZoneSelection next = current == null ? new ZoneSelection() : current;
+            next.b = loc;
             return next;
         });
     }
 
-    public Optional<Selection> get(UUID playerId) {
+    public Optional<ZoneSelection> getSelection(UUID playerId) {
         return Optional.ofNullable(selections.get(playerId));
     }
 
-    public void clear(UUID playerId) {
+    public void clearSelection(UUID playerId) {
         selections.remove(playerId);
     }
 
-    public static final class Selection {
-        private String worldId;
-        private Integer ax;
-        private Integer az;
-        private Integer bx;
-        private Integer bz;
+    public static final class ZoneSelection {
+        private Location2D a;
+        private Location2D b;
 
-        public String getWorldId() { return worldId; }
-        public Integer getAx() { return ax; }
-        public Integer getAz() { return az; }
-        public Integer getBx() { return bx; }
-        public Integer getBz() { return bz; }
+        public Location2D getA() {
+            return a;
+        }
+
+        public Location2D getB() {
+            return b;
+        }
 
         public boolean isComplete() {
-            return worldId != null && ax != null && az != null && bx != null && bz != null;
+            return a != null && b != null;
         }
     }
 }

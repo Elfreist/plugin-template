@@ -2,6 +2,7 @@ package dev.hytalemodding.colonies.listener;
 
 import com.hypixel.hytale.server.core.Message;
 import dev.hytalemodding.colonies.config.ColonyConfig;
+import dev.hytalemodding.colonies.model.Location2D;
 import dev.hytalemodding.colonies.service.SelectionManager;
 import dev.hytalemodding.colonies.util.PlayerAccess;
 
@@ -28,61 +29,49 @@ public class ZoneWandListener {
 
         String heldItemId = PlayerAccess.getHeldItemId(player).orElse("");
         if (!config.getWandItemId().equalsIgnoreCase(heldItemId)) {
-            sendPlayerMessage(player, "Tu dois tenir l’objet de sélection.");
             return;
         }
 
-        String[] pos = extractWorldAndXZ(interactionEvent, player);
-        String worldId = pos[0];
-        int x = Integer.parseInt(pos[1]);
-        int z = Integer.parseInt(pos[2]);
+        Location2D loc = extractClickedLocation(interactionEvent, player);
         String clickType = PlayerAccess.getClickType(interactionEvent);
 
         UUID playerId = PlayerAccess.getPlayerId(player);
         if (clickType.contains("LEFT")) {
-            selectionManager.setA(playerId, worldId, x, z);
-            sendPlayerMessage(player, "PosA définie: x=" + x + " z=" + z);
+            selectionManager.setPosA(playerId, loc);
+            sendPlayerMessage(player, "Pos A définie: " + loc.getX() + " " + loc.getZ() + " (" + loc.getWorldId() + ")");
             return;
         }
 
         if (clickType.contains("RIGHT")) {
-            try {
-                selectionManager.setB(playerId, worldId, x, z);
-                sendPlayerMessage(player, "PosB définie: x=" + x + " z=" + z);
-            } catch (IllegalArgumentException e) {
-                sendPlayerMessage(player, e.getMessage());
-            }
+            selectionManager.setPosB(playerId, loc);
+            sendPlayerMessage(player, "Pos B définie: " + loc.getX() + " " + loc.getZ() + " (" + loc.getWorldId() + ")");
             return;
         }
 
-        // Fallback if API does not expose left/right action: sneak => B, else A.
+        // Fallback if click side is unavailable: sneak = posB, normal = posA.
         boolean sneaking = Boolean.TRUE.equals(invokeNoArg(player, "isSneaking"));
         if (sneaking) {
-            try {
-                selectionManager.setB(playerId, worldId, x, z);
-                sendPlayerMessage(player, "PosB définie: x=" + x + " z=" + z);
-            } catch (IllegalArgumentException e) {
-                sendPlayerMessage(player, e.getMessage());
-            }
+            selectionManager.setPosB(playerId, loc);
+            sendPlayerMessage(player, "Pos B définie (fallback sneak): " + loc.getX() + " " + loc.getZ());
         } else {
-            selectionManager.setA(playerId, worldId, x, z);
-            sendPlayerMessage(player, "PosA définie: x=" + x + " z=" + z);
+            selectionManager.setPosA(playerId, loc);
+            sendPlayerMessage(player, "Pos A définie (fallback): " + loc.getX() + " " + loc.getZ());
         }
     }
 
-    private String[] extractWorldAndXZ(Object event, Object player) {
+    private Location2D extractClickedLocation(Object event, Object player) {
         Object loc = invokeNoArg(event, "getBlockLocation");
         if (loc == null) {
             loc = invokeNoArg(event, "getLocation");
         }
         if (loc == null) {
-            return PlayerAccess.getPlayerWorldAndXZ(player);
+            return PlayerAccess.getPlayerLocation2D(player);
         }
 
         String worldId = String.valueOf(invokeAny(loc, "getWorldId", "getWorld", "world"));
         Number x = (Number) invokeAny(loc, "getX", "x");
         Number z = (Number) invokeAny(loc, "getZ", "z");
-        return new String[]{worldId, String.valueOf(x.intValue()), String.valueOf(z.intValue())};
+        return new Location2D(worldId, x.intValue(), z.intValue());
     }
 
     private void sendPlayerMessage(Object player, String text) {

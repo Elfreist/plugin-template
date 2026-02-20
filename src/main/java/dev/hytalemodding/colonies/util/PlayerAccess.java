@@ -1,5 +1,7 @@
 package dev.hytalemodding.colonies.util;
 
+import dev.hytalemodding.colonies.model.Location2D;
+
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
@@ -41,12 +43,13 @@ public final class PlayerAccess {
         return Optional.ofNullable(id).map(Object::toString);
     }
 
-    public static String[] getPlayerWorldAndXZ(Object player) {
+    public static Location2D getPlayerLocation2D(Object player) {
         Object location = invokeAny(player, List.of("getLocation", "getPosition"));
         String world = String.valueOf(invokeAny(location, List.of("getWorldId", "getWorld", "world")));
+
         int x = ((Number) invokeAny(location, List.of("getX", "x"))).intValue();
         int z = ((Number) invokeAny(location, List.of("getZ", "z"))).intValue();
-        return new String[]{world, String.valueOf(x), String.valueOf(z)};
+        return new Location2D(world, x, z);
     }
 
     public static Object getPlayerFromEvent(Object event) {
@@ -59,6 +62,25 @@ public final class PlayerAccess {
             return "UNKNOWN";
         }
         return action.toString().toUpperCase();
+    }
+
+    public static String getFirstArg(Object commandContext) {
+        Object args = invokeAnyOrNull(commandContext, List.of("getArguments", "getArgs"));
+        if (args instanceof List<?> list && !list.isEmpty()) {
+            return String.valueOf(list.get(0));
+        }
+        if (args instanceof String[] arr && arr.length > 0) {
+            return arr[0];
+        }
+
+        Object raw = invokeAnyOrNull(commandContext, List.of("getRaw", "getInput", "getContent"));
+        if (raw != null) {
+            String[] parts = raw.toString().trim().split("\\s+");
+            if (parts.length >= 2) {
+                return parts[1];
+            }
+        }
+        return null;
     }
 
     private static Object invokeAny(Object target, List<String> names) {

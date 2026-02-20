@@ -3,56 +3,59 @@ package dev.hytalemodding.colonies.model;
 import java.util.Objects;
 
 /**
- * 2D zone (X/Z only) with precomputed bounds and center.
+ * Colony zone boundaries and precomputed 2D center (X/Z).
  */
 public final class Zone {
-    private final String worldId;
-    private final int ax;
-    private final int az;
-    private final int bx;
-    private final int bz;
-    private final int minX;
-    private final int maxX;
-    private final int minZ;
-    private final int maxZ;
-    private final int centerX;
-    private final int centerZ;
+    private final Location2D pos1;
+    private final Location2D pos2;
+    private final Location2D center;
 
-    private Zone(String worldId, int ax, int az, int bx, int bz,
-                 int minX, int maxX, int minZ, int maxZ,
-                 int centerX, int centerZ) {
-        this.worldId = Objects.requireNonNull(worldId, "worldId");
-        this.ax = ax;
-        this.az = az;
-        this.bx = bx;
-        this.bz = bz;
-        this.minX = minX;
-        this.maxX = maxX;
-        this.minZ = minZ;
-        this.maxZ = maxZ;
-        this.centerX = centerX;
-        this.centerZ = centerZ;
+    public Zone(Location2D pos1, Location2D pos2, Location2D center) {
+        this.pos1 = Objects.requireNonNull(pos1, "pos1");
+        this.pos2 = Objects.requireNonNull(pos2, "pos2");
+        this.center = Objects.requireNonNull(center, "center");
     }
 
-    public static Zone from(String worldId, int ax, int az, int bx, int bz) {
-        int minX = Math.min(ax, bx);
-        int maxX = Math.max(ax, bx);
-        int minZ = Math.min(az, bz);
-        int maxZ = Math.max(az, bz);
-        int centerX = (minX + maxX) / 2;
-        int centerZ = (minZ + maxZ) / 2;
-        return new Zone(worldId, ax, az, bx, bz, minX, maxX, minZ, maxZ, centerX, centerZ);
+    public static Zone from(Location2D a, Location2D b) {
+        Objects.requireNonNull(a, "a");
+        Objects.requireNonNull(b, "b");
+        if (!a.getWorldId().equals(b.getWorldId())) {
+            throw new IllegalArgumentException("Zone corners must be in the same world");
+        }
+
+        int minX = Math.min(a.getX(), b.getX());
+        int minZ = Math.min(a.getZ(), b.getZ());
+        int maxX = Math.max(a.getX(), b.getX());
+        int maxZ = Math.max(a.getZ(), b.getZ());
+
+        Location2D pos1 = new Location2D(a.getWorldId(), minX, minZ);
+        Location2D pos2 = new Location2D(a.getWorldId(), maxX, maxZ);
+        Location2D center = new Location2D(
+                a.getWorldId(),
+                (minX + maxX) / 2,
+                (minZ + maxZ) / 2
+        );
+
+        return new Zone(pos1, pos2, center);
     }
 
-    public String getWorldId() { return worldId; }
-    public int getAx() { return ax; }
-    public int getAz() { return az; }
-    public int getBx() { return bx; }
-    public int getBz() { return bz; }
-    public int getMinX() { return minX; }
-    public int getMaxX() { return maxX; }
-    public int getMinZ() { return minZ; }
-    public int getMaxZ() { return maxZ; }
-    public int getCenterX() { return centerX; }
-    public int getCenterZ() { return centerZ; }
+    public int getSizeX() {
+        return Math.abs(pos2.getX() - pos1.getX());
+    }
+
+    public int getSizeZ() {
+        return Math.abs(pos2.getZ() - pos1.getZ());
+    }
+
+    public Location2D getPos1() {
+        return pos1;
+    }
+
+    public Location2D getPos2() {
+        return pos2;
+    }
+
+    public Location2D getCenter() {
+        return center;
+    }
 }
