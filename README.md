@@ -1,5 +1,8 @@
 # Hytale Plugin Template
 
+> 🇫🇷 **Template de base pour créer des mods/plugins Hytale** : si tu veux partir vite avec une
+> structure prête à l'emploi, ce dépôt est fait pour ça.
+
 A ready-to-use starting point for creating Hytale server plugins with Java, _or Kotlin_. If you've
 been using the Asset Editor and want to start writing server-side logic — custom commands, event
 handling, gameplay systems — this is the simplest place to begin.
@@ -11,7 +14,7 @@ handling, gameplay systems — this is the simplest place to begin.
    to use the latest 25 from JetBrains or similar.
 3. Open the project in your favorite IDE, we
    recommend [IntelliJ IDEA](https://www.jetbrains.com/idea/download).
-4. Optionally, run `./gradlew` if your IDE does not automtically synchronizes.
+4. Optionally, run `./gradlew` if your IDE does not automatically synchronize.
 5. Run the devserver with the Run Configuration created, or `./gradlew devServer`.
 
 > On Windows, use `.\gradlew.bat` instead of `./gradlew`, this script is here to run the
