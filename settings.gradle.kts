@@ -21,8 +21,8 @@ hytale {
     }
 
     manifest {
-        Group = "HytaleModding"
-        Name = "ExamplePlugin"
+        Group = "dev.hytalemodding"
+        Name = "MyFirstMod"
         Main = "dev.hytalemodding.ExamplePlugin"
     }
 }
